@@ -23,7 +23,8 @@ Terraform will deploy the following resources:
 * A `null_resource` with a `local_exec` that downloads the Vault Helm chart repo, and uploads the chart to the ChartMuseum instance.
 * A `helm_release` which deploys Vault to the AKS cluster with the additional configuration settings.
 * A TLS self-signed cert to be used by the Ingress controller.
-* A Kubernetes TLS Secret and an Ingress Controller for Vault.
+* A Public IP with a DNS name
+* A Kubernetes TLS Secret and an Nginx Ingress Controller for Vault.
 
 To run the terraform:
 
@@ -38,8 +39,17 @@ terraform apply
 
 Occasionally, the Vault Helm release doesn't wait long enough for tiller to deploy successfully and Terraform will throw an error. If this happens run `terraform apply` again to complete the install of the Vault Helm resource.
 
-Once Terraform completes, the Vault pods should be in a Running state within a few minutes at most. 
+Once Terraform completes, the Vault pods should be in a Running state within a few minutes at most.
 
+The Public IP and DNS name can take upwards of 15 minutes to become active. Once the nginx-ingress-controller has an EXTERNAL-IP that is no longer pending, the UI should be ready if Vault is unsealed.
+
+```
++ kubectl get service --watch nginx-ingress-controller
+NAME                       TYPE           CLUSTER-IP   EXTERNAL-IP   PORT(S)                      AGE
+nginx-ingress-controller   LoadBalancer   10.0.78.54   <pending>     80:32710/TCP,443:31548/TCP   4m56s
+```
+
+In the meantime you can Initialize and Unseal Vault in the next section.
 
 ## Initialize and Unseal Vault
 
