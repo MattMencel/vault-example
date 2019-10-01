@@ -1,5 +1,9 @@
 
-
+resource "kubernetes_namespace" "tiller" {
+  metadata {
+    name = "tiller"
+  }
+}
 
 resource "null_resource" "deploy_vault_helm_to_chartmuseum" {
   triggers = {
@@ -9,8 +13,6 @@ resource "null_resource" "deploy_vault_helm_to_chartmuseum" {
     command = "rm -rf vault; git clone https://github.com/hashicorp/vault-helm vault; cd vault; git checkout ${var.vault-helm_release}; cd ..; helm repo add chartmuseum http://${azurerm_container_group.chartmuseum.fqdn}:8080; helm push -u user -p \"${random_string.chart_museum_pass.result}\" -f vault/ chartmuseum"
   }
 }
-
-
 
 data "helm_repository" "chartmuseum" {
   depends_on = ["null_resource.deploy_vault_helm_to_chartmuseum"]
@@ -38,10 +40,10 @@ resource "helm_release" "vault" {
     value = "true"
   }
 
-  set {
-    name  = "ui.serviceType"
-    value = "LoadBalancer"
-  }
+  # set {
+  #   name  = "ui.serviceType"
+  #   value = "ClusterIP"
+  # }
 
   set {
     name  = "server.ha.config"

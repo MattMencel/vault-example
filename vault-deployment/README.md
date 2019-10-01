@@ -1,6 +1,6 @@
 # Vault Demo - Deployment
 
-This demo uses a mix of Terraform and Vault commands to deploy a 3-node Vault cluster on AKS.
+This demo uses a mix of Terraform and Vault commands to deploy a 3-node Vault cluster, using the new Raft backend, on Azure Kubernetes Service.
 
 ## Prerequisites
 

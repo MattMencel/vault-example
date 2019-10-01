@@ -42,9 +42,9 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
 
 
   addon_profile {
-    http_application_routing {
-      enabled = true
-    }
+    # http_application_routing {
+    #   enabled = true
+    # }
 
     oms_agent {
       enabled                    = true

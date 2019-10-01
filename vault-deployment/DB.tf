@@ -38,8 +38,9 @@ resource "azurerm_postgresql_firewall_rule" "allow_vault" {
   name                = "vault"
   resource_group_name = "${azurerm_resource_group.vaultdemo.name}"
   server_name         = "${azurerm_postgresql_server.psql_server.name}"
-  start_ip_address    = "${kubernetes_ingress.vault_ingress.load_balancer_ingress[0].ip}"
-  end_ip_address      = "${kubernetes_ingress.vault_ingress.load_balancer_ingress[0].ip}"
+  start_ip_address    = "${azurerm_public_ip.ingress_public_ip.ip_address}"
+  end_ip_address      = "${azurerm_public_ip.ingress_public_ip.ip_address}"
+  # end_ip_address      = "${kubernetes_ingress.vault_ingress.load_balancer_ingress[0].ip}"
 }
 
 resource "azurerm_postgresql_firewall_rule" "my_ip" {
