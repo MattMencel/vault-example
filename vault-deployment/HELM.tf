@@ -60,22 +60,14 @@ listener "tcp" {
 storage "raft" {
   path = "/vault/data"
 }
+
+seal "azurekeyvault" {
+  tenant_id = "${data.azurerm_client_config.current.tenant_id}"
+  client_id = "${data.azurerm_client_config.current.client_id}"
+  client_secret = "${var.client_secret}"
+  vault_name = "${azurerm_key_vault.key_vault.name}"
+  key_name = "${azurerm_key_vault_key.key_vault_key.name}"
+}
 EOL
   }
 }
-
-
-### Should go inside the server.ha.config section
-# seal "azurekeyvault" {
-#   tenant_id = "${data.azurerm_client_config.current.tenant_id}"
-#   client_id = "${data.azurerm_client_config.current.client_id}"
-#   client_secret = ${var.client_secret}
-#   vault_name = ${azurerm_key_vault.key_vault.name}
-#   key_name = ${azurerm_key_vault_key.key_vault_key.name}
-# }
-
-# data "kubernetes_service" "vault-ui" {
-#   metadata {
-#     name = "vault-ui"
-#   }
-# }

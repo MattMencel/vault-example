@@ -39,7 +39,7 @@ terraform apply
 
 Occasionally, the Vault Helm release doesn't wait long enough for tiller to deploy successfully and Terraform will throw an error. If this happens run `terraform apply` again to complete the install of the Vault Helm resource.
 
-Once Terraform completes, the Vault pods should be in a Running state within a few minutes at most.
+Once Terraform completes, the Vault pods should be in a Running state within a few minutes.
 
 The Public IP and DNS name can take upwards of 15 minutes to become active. Once the nginx-ingress-controller has an EXTERNAL-IP that is no longer pending, the UI should be ready if Vault is unsealed.
 
@@ -53,30 +53,26 @@ In the meantime you can Initialize and Unseal Vault in the next section.
 
 ## Initialize and Unseal Vault
 
-This is currently a manual process until autounseal works.
+Vault is configured to AutoUnseal using Azure KeyVault. It should only need to be initialized. The Vault instances will autounseal immediately after they are initialized.
 
 Once Terraform completes, Vault should be deployed in a [3-pod cluster using Raft](https://github.com/hashicorp/vault-helm/issues/40) as it's backend. After the Vault pods are running they must be initialized and unsealed before being used. Check pod status with `kubectl get pods --all-namespaces --watch` and wait for the `vault-0` pod to say "Running". 
 
-You can also check the status of vault with `kubectl exec -ti vault-o -- vault status`. It's ready for initialization when you see the configuration key/value pairs
+You can also check the status of vault with `kubectl exec -ti vault-0 -- vault status`. It's ready for initialization when you see the configuration key/value pairs
 
 ### The steps to initialize vault are as follows
 
-1. Initialize and unseal *vault-0* which will be the initial leader.
+1. Initialize *vault-0* which will be the initial leader.
 
 ``` sh
-# Require only one unseal key for demo purposes
-kubectl exec -ti vault-0 -- vault operator init -n 1 -t 1
-kubectl exec -ti vault-0 -- vault operator unseal
+kubectl exec -ti vault-0 -- vault operator init
 ```
 
-2. Store the Unseal Key and Initial Root Token for later use.
-3. For each other `vault` pod (1 and 2) join the raft cluster and unseal.
+2. Store the Initial Root Token for later use.
+3. For each other `vault` pod (1 and 2) join the raft cluster. They will initialize and autounseal once joined.
 
 ``` sh
 kubectl exec -ti vault-1 -- vault operator raft join http://vault-0.vault-headless:8200
 kubectl exec -ti vault-2 -- vault operator raft join http://vault-0.vault-headless:8200
-kubectl exec -ti vault-1 -- vault operator unseal
-kubectl exec -ti vault-2 -- vault operator unseal
 ```
 
 4. After logging into Vault using a token (e.g. Initial Root Token), you can check the configuration of Raft.
@@ -109,10 +105,11 @@ If you run into problems, or just want to deploy a new copy of the vault cluster
 Delete the Vault PVCs first:
 
 ``` sh
-# ampersands must be used as the deletes won't return control to the console until the pods are removed, which happens in the next step.
-kubectl delete pvc data-vault-0 &
-kubectl delete pvc data-vault-1 &
-kubectl delete pvc data-vault-2 &
+# The console won't return control to until the vault pods the PVCs are attached to are removed, which happens in the terraform taint/apply step.
+# So once you see the message that it is deleting each PVC, hit CTRL-C.
+kubectl delete pvc data-vault-0
+kubectl delete pvc data-vault-1
+kubectl delete pvc data-vault-2
 ```
 
 Taint the helm release and run terraform apply:
